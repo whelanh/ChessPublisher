@@ -108,7 +108,7 @@ python examples/all_examples.py
 ls output/
 ```
 
-### 3. Use in Your Code
+### 5. Use in Your Code
 
 ```python
 from chess_generator import ChessDiagramGenerator
