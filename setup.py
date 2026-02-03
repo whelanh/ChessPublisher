@@ -13,12 +13,12 @@ long_description = (this_directory / "README.md").read_text()
 setup(
     name="chess-diagram-generator",
     version="1.0.0",
-    author="Your Name",
-    author_email="your.email@example.com",
-    description="Generate publication-ready chess diagrams and annotated games with Tectonic LaTeX",
+    author="Hugh Whelan",
+    author_email="brickhousedevelopers@gmail.com",
+    description="Generate publication-ready chess diagrams and annotated games using LaTeX",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/chess-diagram-generator",
+    url="https://github.com/whelanh/ChessPublisher",
     py_modules=["chess_generator"],
     install_requires=[
         "chess>=1.10.0",
@@ -46,11 +46,11 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Operating System :: OS Independent",
     ],
-    keywords="chess diagrams latex pdf publishing tectonic pgn fen",
+    keywords="chess diagrams latex pdf publishing texlive pgn fen",
     project_urls={
-        "Bug Reports": "https://github.com/yourusername/chess-diagram-generator/issues",
-        "Documentation": "https://github.com/yourusername/chess-diagram-generator#readme",
-        "Source": "https://github.com/yourusername/chess-diagram-generator",
+        "Bug Reports": "https://github.com/whelanh/ChessPublisher/issues",
+        "Documentation": "https://github.com/whelanh/ChessPublisher#readme",
+        "Source": "https://github.com/whelanh/ChessPublisher",
     },
     include_package_data=True,
     package_data={

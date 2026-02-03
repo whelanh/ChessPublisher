@@ -38,13 +38,47 @@ def check_python_chess():
         return False
 
 
-def check_tectonic():
-    """Verify Tectonic is available"""
-    print("\nChecking Tectonic LaTeX engine...")
+def check_latex_engine():
+    """Verify LaTeX engine is available (pdflatex, xelatex, or tectonic)"""
+    print("\nChecking LaTeX engine...")
     
-    # Check system installation
-    system_tectonic = shutil.which('tectonic')
-    if system_tectonic:
+    # Check for pdflatex (preferred)
+    pdflatex = shutil.which('pdflatex')
+    if pdflatex:
+        try:
+            result = subprocess.run(
+                ['pdflatex', '--version'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                version_line = result.stdout.split('\n')[0]
+                print(f"  ✓ pdflatex: {version_line}")
+                return True, 'pdflatex'
+        except Exception as e:
+            print(f"  ⚠ Found pdflatex but couldn't get version: {e}")
+    
+    # Check for xelatex (alternative)
+    xelatex = shutil.which('xelatex')
+    if xelatex:
+        try:
+            result = subprocess.run(
+                ['xelatex', '--version'],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                version_line = result.stdout.split('\n')[0]
+                print(f"  ✓ xelatex: {version_line}")
+                return True, 'xelatex'
+        except Exception as e:
+            print(f"  ⚠ Found xelatex but couldn't get version: {e}")
+    
+    # Check for tectonic (fallback, but not recommended)
+    tectonic = shutil.which('tectonic')
+    if tectonic:
         try:
             result = subprocess.run(
                 ['tectonic', '--version'],
@@ -54,27 +88,21 @@ def check_tectonic():
             )
             if result.returncode == 0:
                 version = result.stdout.strip()
-                print(f"  ✓ System Tectonic: {version}")
-                return True, system_tectonic
+                print(f"  ✓ tectonic: {version}")
+                print("    Note: Tectonic found but TeX Live is recommended")
+                return True, 'tectonic'
         except Exception as e:
-            print(f"  ⚠ Found Tectonic but couldn't get version: {e}")
+            print(f"  ⚠ Found tectonic but couldn't get version: {e}")
     
-    # Check bundled binary
-    base_dir = Path(__file__).parent
-    platform = 'windows' if sys.platform == 'win32' else 'macos' if sys.platform == 'darwin' else 'linux'
-    bundled_path = base_dir / 'bin' / platform / ('tectonic.exe' if platform == 'windows' else 'tectonic')
-    
-    if bundled_path.exists():
-        print(f"  ✓ Bundled Tectonic: {bundled_path}")
-        return True, str(bundled_path)
-    
-    print("  ✗ Tectonic not found")
-    print("    Install with: brew install tectonic")
-    print("    Or download binaries: see bin/DOWNLOAD_TECTONIC.md")
+    print("  ✗ No LaTeX engine found")
+    print("    Install TeX Live (recommended):")
+    print("      Fedora/RHEL: sudo dnf install texlive-scheme-basic texlive-xskak texlive-chessboard texlive-parskip")
+    print("      Ubuntu/Debian: sudo apt-get install texlive-games texlive-latex-extra")
+    print("      macOS: brew install --cask basictex")
     return False, None
 
 
-def check_latex_packages(tectonic_path):
+def check_latex_packages(latex_engine):
     """Verify xskak and chessboard packages are available"""
     print("\nChecking LaTeX chess packages...")
     
@@ -94,12 +122,19 @@ Test
         tex_file.write_text(test_latex, encoding='utf-8')
         
         try:
+            # Build command based on engine type
+            if latex_engine == 'tectonic':
+                cmd = ['tectonic', '-X', 'compile', str(tex_file)]
+            else:
+                # pdflatex or xelatex - use batch mode and halt on error
+                cmd = [latex_engine, '-interaction=nonstopmode', '-halt-on-error', str(tex_file.name)]
+            
             result = subprocess.run(
-                [tectonic_path, '-X', 'compile', str(tex_file)],
+                cmd,
                 cwd=tmpdir,
                 capture_output=True,
                 text=True,
-                timeout=60  # Give it time to download packages
+                timeout=60  # Give it time to download packages (MiKTeX) or process
             )
             
             if result.returncode == 0:
@@ -109,13 +144,19 @@ Test
             else:
                 print("  ✗ Failed to load chess packages")
                 print("\nError output:")
-                print(result.stderr)
+                # Show last 20 lines of output for debugging
+                error_lines = result.stdout.split('\n')[-20:]
+                print('\n'.join(error_lines))
                 
                 # Check for specific errors
-                if 'xskak.sty' in result.stderr:
+                combined_output = result.stdout + result.stderr
+                if 'xskak.sty' in combined_output or "can't find file `xskak.sty'" in combined_output:
                     print("\n  Issue: xskak.sty not found")
-                    print("  Solution: Ensure internet connection for package download")
-                if 'chessboard.sty' in result.stderr:
+                    print("  Solution: Install chess packages:")
+                    print("    Fedora/RHEL: sudo dnf install texlive-xskak texlive-chessboard")
+                    print("    Ubuntu/Debian: sudo apt-get install texlive-games")
+                    print("    macOS: sudo tlmgr install xskak chessboard")
+                if 'chessboard.sty' in combined_output or "can't find file `chessboard.sty'" in combined_output:
                     print("\n  Issue: chessboard.sty not found")
                 
                 return False
@@ -180,9 +221,11 @@ def print_summary(results):
         print("\n⚠️  Some checks failed. Please review the errors above.")
         print("\nCommon solutions:")
         print("  1. Install python-chess: pip install chess")
-        print("  2. Install Tectonic: brew install tectonic")
-        print("  3. Ensure internet connection (for LaTeX package downloads)")
-        print("  4. See TROUBLESHOOTING.md for more help")
+        print("  2. Install TeX Live:")
+        print("       Fedora/RHEL: sudo dnf install texlive-scheme-basic texlive-xskak texlive-chessboard texlive-parskip")
+        print("       Ubuntu/Debian: sudo apt-get install texlive-games texlive-latex-extra")
+        print("       macOS: brew install --cask basictex")
+        print("  3. See TROUBLESHOOTING.md for more help")
     
     return all_passed
 
@@ -201,19 +244,19 @@ def main():
     # Check python-chess
     results['python-chess library'] = check_python_chess()
     
-    # Check Tectonic
-    tectonic_ok, tectonic_path = check_tectonic()
-    results['Tectonic LaTeX engine'] = tectonic_ok
+    # Check LaTeX engine
+    latex_ok, latex_engine = check_latex_engine()
+    results['LaTeX engine (pdflatex/xelatex/tectonic)'] = latex_ok
     
-    # Check LaTeX packages (only if Tectonic is available)
-    if tectonic_ok:
-        results['LaTeX chess packages'] = check_latex_packages(tectonic_path)
+    # Check LaTeX packages (only if LaTeX engine is available)
+    if latex_ok:
+        results['LaTeX chess packages'] = check_latex_packages(latex_engine)
         
         # Test diagram generation (only if packages are OK)
         if results['LaTeX chess packages']:
             results['Diagram generation'] = test_diagram_generation()
     else:
-        print("\nSkipping LaTeX package checks (Tectonic not available)")
+        print("\nSkipping LaTeX package checks (no LaTeX engine available)")
     
     # Print summary
     all_passed = print_summary(results)
