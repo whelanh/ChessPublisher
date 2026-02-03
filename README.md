@@ -1,3 +1,6 @@
+
+<img width="255" height="330" alt="example4_opera_game" src="https://github.com/user-attachments/assets/8cc036a8-44ae-4044-ae82-9c941787b100" />
+
 # Chess Diagram Generator
 
 A cross-platform Python application for generating publication-ready chess diagrams and annotated games using LaTeX.
@@ -73,31 +76,6 @@ toolbox enter chess-dev
 sudo dnf install texlive-scheme-basic texlive-xskak texlive-chessboard texlive-parskip
 pip install chess
 ```
-
-#### OPTION B: TinyTeX (Experimental - may have issues)
-
-TinyTeX is smaller (~200MB) but has been found to have package repository
-sync issues and missing dependencies.
-
-```bash
-# Automated setup (may fail due to repository issues)
-bash setup_tinytex.sh
-
-# Add to PATH
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-**Known issues:**
-- Repository synchronization problems
-- Missing lambda.sty workaround required
-- Some font packages may not install correctly
-
-#### OPTION C: Tectonic (Not Supported)
-
-Tectonic does NOT include chess packages in its bundle and cannot be used
-without extensive manual package bundling. Not recommended.
-```
-
 ### 3. Verify Setup
 
 ```bash
@@ -163,33 +141,6 @@ chess_diagram_app/
 ├── requirements.txt        # Python dependencies
 └── README.md              # This file
 ```
-
-## Installation
-
-### Option 1: Bundled Binaries (Recommended for Distribution)
-
-1. Download Tectonic binaries from: https://github.com/tectonic-typesetting/tectonic/releases/latest
-2. Place binaries in the appropriate `bin/{platform}/` directory
-3. See `bin/DOWNLOAD_TECTONIC.md` for detailed instructions
-
-### Option 2: System Installation
-
-Install Tectonic system-wide:
-
-```bash
-# macOS with Homebrew
-brew install tectonic
-
-# Arch Linux
-sudo pacman -S tectonic
-
-# From source (requires Rust)
-cargo install tectonic
-
-# Or download from: https://tectonic-typesetting.github.io/
-```
-
-The application will automatically detect and use system-installed Tectonic.
 
 ## API Reference
 
