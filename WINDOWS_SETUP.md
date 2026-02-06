@@ -1,6 +1,6 @@
 # Windows VM Setup and Testing Guide
 
-This guide walks you through setting up a fresh Windows machine to test ChessPublisher.
+This guide walks you through setting up a fresh Windows machine to use ChessPublisher.
 
 ## Step 1: Install Python
 
@@ -14,41 +14,35 @@ Verify installation by opening Command Prompt (Win+R, type `cmd`, press Enter):
 python --version
 ```
 
-## Step 2: Install TeX Live
+## Step 2: Install LaTeX Distribution
 
-TeX Live is recommended for Windows. MiKTeX is an alternative.
+### Option A: MiKTeX (Recommended)
 
-### Option A: TeX Live (Recommended)
+MiKTeX is recommended for Windows - it's faster to install and automatically downloads packages as needed.
 
-1. Download the installer from https://tug.org/texlive/acquire-netinstall.html
-   - Click "install-tl-windows.exe"
+1. Download from https://miktex.org/download
 2. Run the installer
-3. Choose "Install" (full installation takes ~5GB and 30-60 minutes)
-   - For a smaller install, click "Advanced" and select "basic" scheme
-4. Wait for installation to complete
+3. Choose **"Install missing packages on-the-fly: Yes"** (important!)
+4. Complete installation (~5-10 minutes)
 
 After installation, open a **new** Command Prompt and verify:
 ```cmd
 pdflatex --version
 ```
 
-### Option B: MiKTeX (Alternative)
+### Option B: TeX Live (Alternative)
 
-1. Download from https://miktex.org/download
-2. Run the installer
-3. Choose "Install missing packages on-the-fly: Yes"
-4. Complete installation
+TeX Live provides a complete LaTeX distribution but takes significantly longer to install (~2 hours for a full installation).
+
+1. Download the installer from https://tug.org/texlive/acquire-netinstall.html
+2. Run the installer and follow prompts
+3. For a smaller install, click "Advanced" and select "basic" scheme
 
 ## Step 3: Install LaTeX Chess Packages
 
-Open Command Prompt **as Administrator** (right-click → Run as administrator):
+Open Command Prompt (run as Administrator if you encounter permission issues):
 
-For TeX Live:
-```cmd
-tlmgr install xskak chessboard chessfss skak
-```
-
-For MiKTeX, packages install automatically on first use, but you can pre-install:
+**For MiKTeX** (pre-install packages to avoid prompts during use):
 ```cmd
 mpm --install=xskak
 mpm --install=chessboard
@@ -56,21 +50,25 @@ mpm --install=chessfss
 mpm --install=skak
 ```
 
+**For TeX Live:**
+```cmd
+tlmgr install xskak chessboard chessfss skak
+```
+
 ## Step 4: Get ChessPublisher
 
 ### Option A: Clone with Git
 If you have Git installed:
 ```cmd
-git clone https://github.com/YOUR_USERNAME/chessPublisher.git
+git clone https://github.com/whelanh/chessPublisher.git
 cd chessPublisher
-git checkout windows_issues
 ```
 
-### Option B: Copy from shared folder
-If you have a shared folder with your Linux host, copy the entire `chessPublisher` folder to your Windows VM (e.g., to `C:\chess\chessPublisher`).
+### Option B: Download ZIP
+Download the repository as a ZIP from GitHub and extract it.
 
-### Option C: Download ZIP
-Download the repository as a ZIP file and extract it.
+### Option C: Copy from shared folder
+If using a VM with a shared folder, copy the `chessPublisher` folder (e.g., to `C:\chess\chessPublisher`).
 
 ## Step 5: Install Python Dependencies
 
@@ -84,11 +82,12 @@ This installs the `chess` library for PGN parsing.
 
 ## Step 6: Run Tests
 
-### Test 1: Basic Syntax Check
+### Test 1: Run the Windows Test Script
 ```cmd
-python -m py_compile chess_generator.py
+python test_windows.py
 ```
-No output means success.
+
+This tests basic diagram generation, tex_only mode, and annotated games.
 
 ### Test 2: Run All Examples
 ```cmd
@@ -97,17 +96,7 @@ python examples/all_examples.py
 
 This should generate 8 PDF files in the `output/` directory.
 
-### Test 3: Test tex_only Mode
-```cmd
-python -c "from pathlib import Path; from chess_generator import ChessDiagramGenerator; g = ChessDiagramGenerator(verbose=True); g.generate_single_diagram('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', Path('output/test.pdf'), title='Test', tex_only=True)"
-```
-
-Check that `output/test.tex` was created.
-
-### Test 4: Test LuaLaTeX (if installed)
-```cmd
-python -c "from chess_generator import ChessDiagramGenerator; g = ChessDiagramGenerator(verbose=True, preferred_engine='lualatex'); print('Engine:', g.engine.engine_type)"
-```
+**Note:** Do NOT use `verify_setup.py` on Windows - it may report false errors. Use `test_windows.py` or `examples/all_examples.py` instead.
 
 ## Expected Results
 
@@ -122,76 +111,30 @@ python -c "from chess_generator import ChessDiagramGenerator; g = ChessDiagramGe
 - Or manually add Python to PATH: Search "Environment Variables" → Edit PATH → Add Python install directory
 
 ### "pdflatex is not recognized"
-- TeX Live may not be in PATH. Add `C:\texlive\2024\bin\windows` to your PATH
-- Or restart Command Prompt after TeX Live installation
+- Restart Command Prompt after installing MiKTeX or TeX Live
+- For TeX Live, add `C:\texlive\2024\bin\windows` to your PATH
+
+### MiKTeX package prompts during compilation
+- Run the `mpm --install=...` commands from Step 3 to pre-install packages
+- Or allow MiKTeX to install packages automatically when prompted
 
 ### "I can't find file" errors with paths containing ~
 - This should be fixed automatically now
 - If it persists, try moving the project to a simple path like `C:\chess\chessPublisher`
 
 ### Package not found errors
-- Run `tlmgr install xskak chessboard chessfss skak` again
-- For MiKTeX, run MiKTeX Console → Updates → Check for updates
+- For MiKTeX: Open MiKTeX Console → Updates → Check for updates, then re-run the mpm install commands
+- For TeX Live: Run `tlmgr install xskak chessboard chessfss skak`
 
 ### Permission errors
 - Don't run from `C:\Program Files` or other protected directories
 - Use a folder like `C:\chess\` or your Documents folder
 
-## Quick Test Script
+## Quick Test
 
-Save this as `test_windows.py` in the chessPublisher directory:
-
-```python
-"""Quick Windows compatibility test"""
-from pathlib import Path
-from chess_generator import ChessDiagramGenerator
-
-print("=" * 50)
-print("ChessPublisher Windows Test")
-print("=" * 50)
-
-# Test 1: Basic diagram
-print("\n1. Testing basic diagram generation...")
-g = ChessDiagramGenerator(verbose=True)
-success = g.generate_single_diagram(
-    fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-    output_path=Path("output/windows_test.pdf"),
-    title="Windows Test"
-)
-print(f"   Result: {'PASS' if success else 'FAIL'}")
-
-# Test 2: tex_only mode
-print("\n2. Testing tex_only mode...")
-success = g.generate_single_diagram(
-    fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-    output_path=Path("output/windows_test_texonly.pdf"),
-    title="TeX Only Test",
-    tex_only=True
-)
-tex_exists = Path("output/windows_test_texonly.tex").exists()
-print(f"   Result: {'PASS' if success and tex_exists else 'FAIL'}")
-
-# Test 3: Annotated game
-print("\n3. Testing annotated game...")
-pgn = '''[Event "Test"]
-[White "White"]
-[Black "Black"]
-[Result "1-0"]
-
-1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 1-0'''
-
-success = g.generate_annotated_game(
-    pgn_content=pgn,
-    output_path=Path("output/windows_test_game.pdf")
-)
-print(f"   Result: {'PASS' if success else 'FAIL'}")
-
-print("\n" + "=" * 50)
-print("Tests complete! Check the output/ folder for generated files.")
-print("=" * 50)
-```
-
-Run it with:
+The repository includes `test_windows.py` - just run:
 ```cmd
 python test_windows.py
 ```
+
+This will test PDF generation, tex_only mode, and annotated games, then report PASS/FAIL for each.

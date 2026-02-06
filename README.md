@@ -14,8 +14,9 @@ A cross-platform Python application for generating publication-ready chess diagr
 - ✅ Insert diagrams at specific moves in a game
 - ✅ High-quality PDF output suitable for books and publications
 - ✅ Cross-platform (Windows, Linux, macOS)
-- ✅ Automatic LaTeX engine detection (pdflatex, xelatex, or Tectonic)
-- ✅ Works with standard TeX Live installations
+- ✅ Automatic LaTeX engine detection (pdflatex, lualatex, xelatex, or Tectonic)
+- ✅ Option to output raw LaTeX files (`tex_only` mode) for manual compilation
+- ✅ Works with TeX Live and MiKTeX installations
 - ✅ Supports immutable Linux systems via distrobox/toolbox
 
 ## Quick Start
@@ -65,8 +66,10 @@ sudo tlmgr install xskak chessboard parskip
 ```
 
 **Windows:**
-- Download and install [MiKTeX](https://miktex.org/download)
-- Packages will be installed automatically on first use
+- Download and install [MiKTeX](https://miktex.org/download) (recommended - faster than TeX Live)
+- During install, choose "Install missing packages on-the-fly: Yes"
+- Pre-install chess packages: `mpm --install=xskak` and `mpm --install=chessboard`
+- See [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for detailed instructions
 
 **Note for immutable systems (Fedora Silverblue/Kinoite):**
 ```bash
@@ -76,27 +79,23 @@ toolbox enter chess-dev
 sudo dnf install texlive-scheme-basic texlive-xskak texlive-chessboard texlive-parskip
 pip install chess
 ```
-### 3. Verify Setup
+### 3. Test Your Setup
+
+The best way to verify your setup is to run the examples directly:
 
 ```bash
-# Run the verification script
-python3 verify_setup.py
+python examples/all_examples.py
 ```
 
-This will check:
-- Python version and dependencies
-- LaTeX engine availability (pdflatex/xelatex/tectonic)
-- Required LaTeX packages
-- Test diagram generation
+If this succeeds, you'll see 8 PDF files in the `output/` directory.
 
-**Expected output:**
-```
-✓ PASS: Python 3.7+
-✓ PASS: python-chess library
-✓ PASS: LaTeX engine (pdflatex)
-✓ PASS: LaTeX chess packages
-✓ PASS: Diagram generation
-```
+**If you see package errors** (e.g., "xskak.sty not found"), install the missing packages:
+- **Fedora/RHEL:** `sudo dnf install texlive-xskak texlive-chessboard`
+- **Ubuntu/Debian:** `sudo apt-get install texlive-games`
+- **macOS:** `sudo tlmgr install xskak chessboard`
+- **Windows (MiKTeX):** `mpm --install=xskak` and `mpm --install=chessboard`
+
+**Note:** There is a `verify_setup.py` script, but it may report false errors on some systems (particularly Windows and Debian). Running `examples/all_examples.py` is the most reliable test.
 
 ### 4. Run Examples
 
@@ -131,16 +130,17 @@ generator.generate_single_diagram(
 
 Main class for generating chess diagrams.
 
-#### `generate_single_diagram(fen, output_pdf, title=None, caption=None, board_size="3in")`
+#### `generate_single_diagram(fen, output_path, title=None, caption=None, board_size="3in", tex_only=False)`
 
 Generate a single diagram from FEN notation.
 
 **Parameters:**
 - `fen` (str): FEN string representing the position
-- `output_pdf` (Path): Where to save the PDF
+- `output_path` (Path): Where to save the output (PDF or .tex file)
 - `title` (str, optional): Title above the diagram
 - `caption` (str, optional): Caption below the diagram
 - `board_size` (str): Size of board (e.g., "3in", "10cm")
+- `tex_only` (bool): If True, save only the .tex file without compiling to PDF
 
 **Returns:** `bool` - True if successful
 
@@ -155,15 +155,16 @@ generator.generate_single_diagram(
 )
 ```
 
-#### `generate_annotated_game(pgn_content, output_pdf, diagrams_at_moves=None, show_final_position=True)`
+#### `generate_annotated_game(pgn_content, output_path, diagrams_at_moves=None, show_final_position=True, tex_only=False)`
 
 Generate a complete annotated game with optional diagrams.
 
 **Parameters:**
 - `pgn_content` (str): PGN format game
-- `output_pdf` (Path): Where to save the PDF
+- `output_path` (Path): Where to save the output (PDF or .tex file)
 - `diagrams_at_moves` (List[int], optional): Move numbers for diagrams (0-indexed)
 - `show_final_position` (bool): Whether to show final position
+- `tex_only` (bool): If True, save only the .tex file without compiling to PDF
 
 **Returns:** `bool` - True if successful
 
@@ -184,15 +185,16 @@ generator.generate_annotated_game(
 )
 ```
 
-#### `generate_diagram_at_move(pgn_content, move_number, output_pdf, title=None)`
+#### `generate_diagram_at_move(pgn_content, move_number, output_path, title=None, tex_only=False)`
 
 Extract and generate a diagram at a specific move.
 
 **Parameters:**
 - `pgn_content` (str): PGN format game
 - `move_number` (int): Move number to extract (0-indexed, half-moves)
-- `output_pdf` (Path): Where to save the PDF
+- `output_path` (Path): Where to save the output (PDF or .tex file)
 - `title` (str, optional): Title for the diagram
+- `tex_only` (bool): If True, save only the .tex file without compiling to PDF
 
 **Returns:** `bool` - True if successful
 
@@ -290,15 +292,13 @@ Example:
 
 #### "File 'xskak.sty' not found"
 
-**Cause:** LaTeX packages need to be downloaded on first use.
+**Cause:** LaTeX chess packages are not installed.
 
-**Solution:**
-1. Ensure internet connection
-2. Run `python3 verify_setup.py` (downloads packages automatically)
-3. Wait 30-60 seconds for download to complete
-4. Try again
-
-After first successful run, the app works offline.
+**Solution:** Install the missing packages for your system:
+- **Fedora/RHEL:** `sudo dnf install texlive-xskak texlive-chessboard texlive-chessfss texlive-skak`
+- **Ubuntu/Debian:** `sudo apt-get install texlive-games`
+- **macOS:** `sudo tlmgr install xskak chessboard chessfss skak`
+- **Windows (MiKTeX):** `mpm --install=xskak` (and same for chessboard, chessfss, skak)
 
 #### "No module named 'chess'"
 
