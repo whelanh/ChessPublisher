@@ -1,6 +1,8 @@
 
 <img width="255" height="330" alt="example4_opera_game" src="https://github.com/user-attachments/assets/8cc036a8-44ae-4044-ae82-9c941787b100" />
 <img width="288" height="304" alt="example5_scholars_mate" src="https://github.com/user-attachments/assets/90ebc7e2-06dc-4518-9cc6-fadd53bd3c80" />
+<img width="255" height="330" alt="KymerZilka" src="https://github.com/user-attachments/assets/d47d5ca4-c24b-473e-bab0-291daf2dd9b4" />
+
 
 
 # Chess Diagram Generator
