@@ -145,7 +145,7 @@ def show_fen_examples():
     print("\nTo use these positions, create diagrams like this:\n")
     print('generator.generate_single_diagram(')
     print('    fen="[FEN_STRING]",')
-    print('    output_pdf="output.pdf",')
+    print('    output_path="output.pdf",')
     print('    title="[TITLE]"')
     print(')\n')
     
@@ -184,7 +184,7 @@ class ChessBookPublisher:
             output_file = chapter_dir / f"{opening_name}_{i+1}.pdf"
             self.generator.generate_annotated_game(
                 pgn_content=game,
-                output_pdf=output_file,
+                output_path=output_file,
                 show_final_position=True
             )
     
@@ -197,7 +197,7 @@ class ChessBookPublisher:
             output_file = puzzle_dir / f"puzzle_{i+1}.pdf"
             self.generator.generate_single_diagram(
                 fen=fen,
-                output_pdf=output_file,
+                output_path=output_file,
                 title=title,
                 caption=f"Puzzle #{i+1}"
             )

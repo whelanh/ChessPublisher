@@ -179,16 +179,16 @@ def test_diagram_generation():
         
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
-            output_pdf = tmpdir / 'test.pdf'
+            output_path = tmpdir / 'test.pdf'
             
             generator = ChessDiagramGenerator(verbose=False)
             success = generator.generate_single_diagram(
                 fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-                output_pdf=output_pdf,
+                output_path=output_path,
                 title="Test Diagram"
             )
             
-            if success and output_pdf.exists():
+            if success and output_path.exists():
                 print("  ✓ Successfully generated test diagram")
                 return True
             else:

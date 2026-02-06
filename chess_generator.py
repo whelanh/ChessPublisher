@@ -540,7 +540,7 @@ def main():
     fen = "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3"
     success = generator.generate_single_diagram(
         fen=fen,
-        output_pdf=output_dir / "single_diagram.pdf",
+        output_path=output_dir / "single_diagram.pdf",
         title="Scandinavian Defense",
         caption="After 1.e4 e5 2.Nf3 Nc6"
     )

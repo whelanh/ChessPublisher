@@ -24,7 +24,7 @@ def example_1_basic_diagram():
     
     success = generator.generate_single_diagram(
         fen=fen,
-        output_pdf=output_dir / "example1_immortal_game.pdf",
+        output_path=output_dir / "example1_immortal_game.pdf",
         title="The Immortal Game",
         caption="Position after 11...Nxf3+ - White sacrificed both rooks!",
         board_size="4in"
@@ -48,7 +48,7 @@ def example_2_starting_position():
     
     success = generator.generate_single_diagram(
         fen=fen,
-        output_pdf=output_dir / "example2_starting_position.pdf",
+        output_path=output_dir / "example2_starting_position.pdf",
         title="Chess Starting Position",
         caption="The initial setup for a game of chess"
     )
@@ -69,7 +69,7 @@ def example_3_tactical_puzzle():
     
     success = generator.generate_single_diagram(
         fen=fen,
-        output_pdf=output_dir / "example3_back_rank_mate.pdf",
+        output_path=output_dir / "example3_back_rank_mate.pdf",
         title="Puzzle: White to Move and Win",
         caption="Find the back rank mate in 1 move!",
         board_size="3.5in"
@@ -101,7 +101,7 @@ def example_4_annotated_game():
     # Show diagrams at key moments
     success = generator.generate_annotated_game(
         pgn_content=pgn,
-        output_pdf=output_dir / "example4_opera_game.pdf",
+        output_path=output_dir / "example4_opera_game.pdf",
         diagrams_at_moves=[10, 15],  # Show position after moves 11 and 16
         show_final_position=True
     )
@@ -128,7 +128,7 @@ def example_5_scholars_mate():
     
     success = generator.generate_annotated_game(
         pgn_content=pgn,
-        output_pdf=output_dir / "example5_scholars_mate.pdf",
+        output_path=output_dir / "example5_scholars_mate.pdf",
         show_final_position=True
     )
     
@@ -155,7 +155,7 @@ def example_6_diagram_at_specific_move():
     success = generator.generate_diagram_at_move(
         pgn_content=pgn,
         move_number=5,  # 0-indexed: move 6 is index 5
-        output_pdf=output_dir / "example6_position_after_qh5.pdf",
+        output_path=output_dir / "example6_position_after_qh5.pdf",
         title="Critical Moment: After 3. Qh5"
     )
     
@@ -175,7 +175,7 @@ def example_7_endgame_position():
     
     success = generator.generate_single_diagram(
         fen=fen,
-        output_pdf=output_dir / "example7_lucena_position.pdf",
+        output_path=output_dir / "example7_lucena_position.pdf",
         title="The Lucena Position",
         caption="A fundamental winning position in rook endgames",
         board_size="3.5in"
@@ -197,7 +197,7 @@ def example_8_complex_middle_game():
     
     success = generator.generate_single_diagram(
         fen=fen,
-        output_pdf=output_dir / "example8_sicilian_dragon.pdf",
+        output_path=output_dir / "example8_sicilian_dragon.pdf",
         title="Sicilian Defense - Dragon Variation",
         caption="Sharp theoretical position with opposite-side castling",
         board_size="4in"

@@ -36,7 +36,7 @@ class PuzzleBook:
         
         success = self.generator.generate_single_diagram(
             fen=fen,
-            output_pdf=self.output_dir / filename,
+            output_path=self.output_dir / filename,
             title=f"Puzzle #{puzzle_num}: {title}",
             caption=caption,
             board_size="4in"
@@ -229,7 +229,7 @@ def create_opening_repertoire():
         output_file = output_dir / f"{opening_name}.pdf"
         generator.generate_annotated_game(
             pgn_content=pgn,
-            output_pdf=output_file,
+            output_path=output_file,
             show_final_position=True
         )
     
