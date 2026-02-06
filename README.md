@@ -125,23 +125,6 @@ generator.generate_single_diagram(
 )
 ```
 
-## Directory Structure
-
-```
-chess_diagram_app/
-├── bin/
-│   ├── linux/              # Tectonic binary for Linux
-│   ├── windows/            # Tectonic binary for Windows
-│   ├── macos/              # Tectonic binary for macOS
-│   └── DOWNLOAD_TECTONIC.md
-├── examples/
-│   └── all_examples.py     # Complete usage examples
-├── output/                 # Generated PDFs go here
-├── chess_generator.py      # Main application
-├── requirements.txt        # Python dependencies
-└── README.md              # This file
-```
-
 ## API Reference
 
 ### ChessDiagramGenerator
@@ -302,15 +285,6 @@ Example:
 }
 ```
 
-## Troubleshooting
-
-### Quick Fix for Most Issues
-
-Run the verification script to diagnose problems:
-
-```bash
-python3 verify_setup.py
-```
 
 ### Common Issues
 
@@ -326,19 +300,6 @@ python3 verify_setup.py
 
 After first successful run, the app works offline.
 
-#### "Tectonic not found" Error
-
-**Solution:** Install Tectonic:
-```bash
-# macOS/Linux with Homebrew
-brew install tectonic
-
-# Fedora
-sudo dnf install tectonic
-
-# Or download binaries to bin/{platform}/ - see bin/DOWNLOAD_TECTONIC.md
-```
-
 #### "No module named 'chess'"
 
 **Solution:** Install python-chess:
@@ -346,38 +307,13 @@ sudo dnf install tectonic
 pip install -r requirements.txt
 ```
 
-### Detailed Troubleshooting
-
-For comprehensive troubleshooting including:
-- Offline usage
-- Proxy/firewall configuration
-- Platform-specific issues (Windows, macOS, Linux)
-- LaTeX package cache management
-- CI/CD and Docker setup
-
-See **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**
-
 ## Dependencies
 
 - **Python 3.7+**
 - **python-chess**: For PGN parsing and FEN manipulation
-- **Tectonic**: LaTeX engine (bundled or system-installed)
-
-## License
-
-This application is provided as-is for educational and publication purposes.
-
-## Credits
-
-- **Tectonic**: Modern, self-contained TeX/LaTeX engine
-- **xskak**: LaTeX package for chess typesetting
-- **python-chess**: Chess library for Python
-
-## Contributing
 
 Feel free to submit issues and enhancement requests!
 
-## Support
 
 For issues related to:
 - Tectonic: https://github.com/tectonic-typesetting/tectonic
