@@ -313,9 +313,3 @@ pip install -r requirements.txt
 - **python-chess**: For PGN parsing and FEN manipulation
 
 Feel free to submit issues and enhancement requests!
-
-
-For issues related to:
-- Tectonic: https://github.com/tectonic-typesetting/tectonic
-- python-chess: https://python-chess.readthedocs.io/
-- This application: Open an issue in this repository
