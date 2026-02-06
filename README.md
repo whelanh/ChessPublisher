@@ -97,7 +97,7 @@ If this succeeds, you'll see 8 PDF files in the `output/` directory.
 - **macOS:** `sudo tlmgr install xskak chessboard`
 - **Windows (MiKTeX):** `mpm --install=xskak` and `mpm --install=chessboard`
 
-**Note:** There is a `verify_setup.py` script, but it may report false errors on some systems (particularly Windows and Debian). Running `examples/all_examples.py` is the most reliable test.
+**Note:** There is a `verify_setup.py` script, but it may report false errors on some systems. Running `examples/all_examples.py` is the most reliable test.
 
 ### 4. Run Examples
 
@@ -107,6 +107,11 @@ python examples/all_examples.py
 
 # Check output directory for generated PDFs
 ls output/
+```
+The best example of a typical use case where a PGN file produced by the annotation function of the [scidCommunity](https://github.com/whelanh/scidCommunity) Analysis Tool is turned into a comprehensive PDF is in the examples directory and was produced by running:
+
+```bash
+python read_pgn_example.py KymerZilka.pgn
 ```
 
 ### 5. Use in Your Code
