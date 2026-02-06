@@ -439,9 +439,10 @@ def generate_game_latex(game: chess.pgn.Game) -> str:
     result = game.headers.get("Result", "*")
     latex += f"\n\n\\textbf{{{result}}}\n\n"
     
-    # Final position
+    # Final position - use the board state after processing all mainline moves
+    final_fen = board.fen()
     latex += "\\subsection*{Final Position}\n\n"
-    latex += "\\chessboard\n\n"
+    latex += f"\\chessboard[setfen={final_fen}]\n\n"
     
     latex += generate_latex_postamble()
     
