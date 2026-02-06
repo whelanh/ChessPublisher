@@ -46,8 +46,8 @@ class LaTeXEngine:
         """
         Convert Windows 8.3 short path names to long path names.
         
-        On Windows, paths like 'C:\\Users\\ULRICH~1\\...' can cause issues with
-        LaTeX engines. This converts them to the full path like 'C:\\Users\\UlrichDirr\\...'.
+        On Windows, paths like 'C:\\Users\\MYNAME~1\\...' can cause issues with
+        LaTeX engines. This converts them to the full path like 'C:\\Users\\Myname\\...'.
         
         On non-Windows systems, returns the path unchanged.
         """
@@ -153,7 +153,7 @@ class LaTeXEngine:
             working_dir = Path(working_dir)
             cleanup = False
         
-        # Convert short 8.3 paths to long paths on Windows (fixes ULRICH~1 issue)
+        # Convert short 8.3 paths to long paths on Windows 
         working_dir = self._get_long_path_name(working_dir)
         
         working_dir.mkdir(parents=True, exist_ok=True)
