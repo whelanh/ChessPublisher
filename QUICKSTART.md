@@ -11,7 +11,7 @@ sudo dnf install texlive-scheme-basic texlive-xskak texlive-chessboard texlive-p
 
 **Ubuntu/Debian:**
 ```bash
-sudo apt-get install texlive-games texlive-latex-extra
+sudo apt install texlive-games texlive-latex-extra texlive-fonts-extra
 ```
 
 **macOS:**
@@ -36,14 +36,12 @@ sudo dnf install texlive-scheme-basic texlive-xskak texlive-chessboard texlive-p
 ### Step 2: Install Python Package
 
 ```bash
-pip install chess
+pip install chess --break-
 ```
 
 ### Step 3: Test It
 
 ```bash
-# See what LaTeX would be generated (no Tectonic needed)
-python demo_latex_output.py
 
 # Generate actual PDFs (requires Tectonic)
 python examples/all_examples.py
@@ -142,7 +140,7 @@ which pdflatex
 
 **"No module named 'chess'"**
 ```bash
-pip install chess
+pip install chess --brea
 ```
 
 **"File 'xskak.sty' not found"**
@@ -160,4 +158,4 @@ pip install chess
 
 - Read `README.md` for full documentation
 - Check `examples/all_examples.py` for more examples
-- See `demo_latex_output.py` to understand the LaTeX being generated
+
