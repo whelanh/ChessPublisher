@@ -11,13 +11,23 @@ from pathlib import Path
 from typing import Optional, List, Tuple
 import tempfile
 import os
+import ctypes
 
 
 class LaTeXEngine:
-    """Manages LaTeX compilation across platforms - supports pdflatex, xelatex, and Tectonic"""
+    """Manages LaTeX compilation across platforms - supports pdflatex, lualatex, xelatex, and Tectonic"""
     
-    def __init__(self, verbose: bool = False):
+    def __init__(self, verbose: bool = False, preferred_engine: Optional[str] = None):
+        """
+        Initialize LaTeX engine.
+        
+        Args:
+            verbose: Print detailed output during compilation
+            preferred_engine: Preferred LaTeX engine ('pdflatex', 'lualatex', 'xelatex', 'tectonic')
+                             If specified and available, this engine will be used instead of auto-detection.
+        """
         self.verbose = verbose
+        self.preferred_engine = preferred_engine
         self.engine_type, self.engine_path = self._find_latex_engine()
         
         if not self.engine_path:
@@ -32,6 +42,30 @@ class LaTeXEngine:
         if self.verbose:
             print(f"Using {self.engine_type} at: {self.engine_path}")
     
+    def _get_long_path_name(self, path: Path) -> Path:
+        """
+        Convert Windows 8.3 short path names to long path names.
+        
+        On Windows, paths like 'C:\\Users\\ULRICH~1\\...' can cause issues with
+        LaTeX engines. This converts them to the full path like 'C:\\Users\\UlrichDirr\\...'.
+        
+        On non-Windows systems, returns the path unchanged.
+        """
+        if sys.platform != 'win32':
+            return path
+        
+        try:
+            # Use Windows API to get the long path name
+            buf = ctypes.create_unicode_buffer(512)
+            get_long_path_name = ctypes.windll.kernel32.GetLongPathNameW
+            result = get_long_path_name(str(path), buf, 512)
+            if result > 0 and result < 512:
+                return Path(buf.value)
+        except Exception:
+            pass  # Fall back to original path if conversion fails
+        
+        return path
+    
     def _get_platform_name(self) -> str:
         """Determine the platform-specific directory name"""
         if sys.platform == 'win32':
@@ -42,11 +76,25 @@ class LaTeXEngine:
             return 'linux'
     
     def _find_latex_engine(self) -> Tuple[str, Optional[Path]]:
-        """Find available LaTeX engine - tries pdflatex, xelatex, then Tectonic"""
+        """Find available LaTeX engine - tries preferred engine first, then pdflatex, lualatex, xelatex, Tectonic"""
+        
+        # If user specified a preferred engine, try that first
+        if self.preferred_engine:
+            engine_path = shutil.which(self.preferred_engine)
+            if engine_path:
+                return (self.preferred_engine, Path(engine_path))
+            elif self.verbose:
+                print(f"Warning: Preferred engine '{self.preferred_engine}' not found, trying alternatives...")
+        
         # Try pdflatex first (most reliable for chess packages)
         pdflatex = shutil.which('pdflatex')
         if pdflatex:
             return ('pdflatex', Path(pdflatex))
+        
+        # Try lualatex (better OpenType font support)
+        lualatex = shutil.which('lualatex')
+        if lualatex:
+            return ('lualatex', Path(lualatex))
         
         # Try xelatex
         xelatex = shutil.which('xelatex')
@@ -105,6 +153,9 @@ class LaTeXEngine:
             working_dir = Path(working_dir)
             cleanup = False
         
+        # Convert short 8.3 paths to long paths on Windows (fixes ULRICH~1 issue)
+        working_dir = self._get_long_path_name(working_dir)
+        
         working_dir.mkdir(parents=True, exist_ok=True)
         
         # Copy bundled LaTeX packages
@@ -117,7 +168,7 @@ class LaTeXEngine:
             tex_file.write_text(tex_content, encoding='utf-8')
             
             # Compile with appropriate engine
-            if self.engine_type in ('pdflatex', 'xelatex'):
+            if self.engine_type in ('pdflatex', 'xelatex', 'lualatex'):
                 # Use traditional LaTeX engines
                 result = subprocess.run(
                     [str(self.engine_path), '-interaction=nonstopmode',
@@ -126,7 +177,7 @@ class LaTeXEngine:
                     cwd=working_dir,
                     capture_output=True,
                     text=True,
-                    timeout=30  # 30 second timeout
+                    timeout=60  # 60 second timeout (lualatex can be slower)
                 )
             else:
                 # Use Tectonic
@@ -154,7 +205,7 @@ class LaTeXEngine:
                     print("\n⚠️  LaTeX Package Error Detected")
                     print("The required chess packages (xskak, chessboard) are not available.")
                     print("\nSolution:")
-                    if self.engine_type in ('pdflatex', 'xelatex'):
+                    if self.engine_type in ('pdflatex', 'xelatex', 'lualatex'):
                         print("  Install packages: tlmgr install xskak chessboard chessfss skak")
                     else:
                         print("  1. Ensure you have an internet connection")
@@ -191,8 +242,15 @@ class LaTeXEngine:
 class ChessDiagramGenerator:
     """Generate chess diagrams and annotated games"""
     
-    def __init__(self, verbose: bool = False):
-        self.engine = LaTeXEngine(verbose=verbose)
+    def __init__(self, verbose: bool = False, preferred_engine: Optional[str] = None):
+        """
+        Initialize the chess diagram generator.
+        
+        Args:
+            verbose: Print detailed output during generation
+            preferred_engine: Preferred LaTeX engine ('pdflatex', 'lualatex', 'xelatex', 'tectonic')
+        """
+        self.engine = LaTeXEngine(verbose=verbose, preferred_engine=preferred_engine)
         self.verbose = verbose
     
     def _generate_latex_preamble(self) -> str:
@@ -222,20 +280,22 @@ class ChessDiagramGenerator:
     def generate_single_diagram(
         self, 
         fen: str, 
-        output_pdf: Path,
+        output_path: Path,
         title: Optional[str] = None,
         caption: Optional[str] = None,
-        board_size: str = "3in"
+        board_size: str = "3in",
+        tex_only: bool = False
     ) -> bool:
         """
         Generate a single chess diagram from FEN notation
         
         Args:
             fen: FEN string representing the position
-            output_pdf: Where to save the PDF
+            output_path: Where to save the output (PDF or .tex file)
             title: Optional title for the diagram
             caption: Optional caption below the diagram
             board_size: Size of the chess board (e.g., "3in", "10cm")
+            tex_only: If True, save only the .tex file without compiling to PDF
         
         Returns:
             True if successful
@@ -254,14 +314,45 @@ class ChessDiagramGenerator:
         
         latex_content += self._generate_latex_postamble()
         
-        return self.engine.compile(latex_content, output_pdf)
+        if tex_only:
+            return self._save_tex_file(latex_content, output_path)
+        return self.engine.compile(latex_content, output_path)
+    
+    def _save_tex_file(self, latex_content: str, output_path: Path) -> bool:
+        """
+        Save LaTeX content to a .tex file without compiling.
+        
+        Args:
+            latex_content: The LaTeX source code
+            output_path: Where to save the .tex file (extension will be changed to .tex)
+        
+        Returns:
+            True if successful
+        """
+        try:
+            output_path = Path(output_path)
+            # Change extension to .tex if needed
+            if output_path.suffix.lower() == '.pdf':
+                output_path = output_path.with_suffix('.tex')
+            
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(latex_content, encoding='utf-8')
+            
+            if self.verbose:
+                print(f"✓ LaTeX file saved: {output_path}")
+            return True
+        except Exception as e:
+            if self.verbose:
+                print(f"Error saving LaTeX file: {e}")
+            return False
     
     def generate_diagram_at_move(
         self,
         pgn_content: str,
         move_number: int,
-        output_pdf: Path,
-        title: Optional[str] = None
+        output_path: Path,
+        title: Optional[str] = None,
+        tex_only: bool = False
     ) -> bool:
         """
         Generate diagram showing position after a specific move
@@ -269,8 +360,9 @@ class ChessDiagramGenerator:
         Args:
             pgn_content: PGN game as string
             move_number: Which move to show (half-move count, 0-indexed)
-            output_pdf: Where to save the PDF
+            output_path: Where to save the output (PDF or .tex file)
             title: Optional title
+            tex_only: If True, save only the .tex file without compiling to PDF
         
         Returns:
             True if successful
@@ -302,7 +394,7 @@ class ChessDiagramGenerator:
             if title is None:
                 title = f"Position after move {move_number}"
             
-            return self.generate_single_diagram(fen, output_pdf, title=title)
+            return self.generate_single_diagram(fen, output_path, title=title, tex_only=tex_only)
             
         except ImportError:
             print("Error: python-chess library required. Install with: pip install chess")
@@ -315,18 +407,20 @@ class ChessDiagramGenerator:
     def generate_annotated_game(
         self,
         pgn_content: str,
-        output_pdf: Path,
+        output_path: Path,
         diagrams_at_moves: Optional[List[int]] = None,
-        show_final_position: bool = True
+        show_final_position: bool = True,
+        tex_only: bool = False
     ) -> bool:
         """
         Generate a complete annotated game with diagrams
         
         Args:
             pgn_content: PGN game as string
-            output_pdf: Where to save the PDF
+            output_path: Where to save the output (PDF or .tex file)
             diagrams_at_moves: List of move numbers where diagrams should appear
             show_final_position: Whether to show final position diagram
+            tex_only: If True, save only the .tex file without compiling to PDF
         
         Returns:
             True if successful
@@ -420,7 +514,9 @@ class ChessDiagramGenerator:
             
             latex_content += self._generate_latex_postamble()
             
-            return self.engine.compile(latex_content, output_pdf)
+            if tex_only:
+                return self._save_tex_file(latex_content, output_path)
+            return self.engine.compile(latex_content, output_path)
             
         except ImportError:
             print("Error: python-chess library required. Install with: pip install chess")
