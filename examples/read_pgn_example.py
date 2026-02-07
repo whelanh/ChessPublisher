@@ -87,25 +87,153 @@ def strip_diagram_annotation(comment: str) -> str:
 
 
 def nag_to_symbol(nag: int) -> str:
-    """Convert NAG (Numeric Annotation Glyph) to symbol."""
+    """Convert NAG (Numeric Annotation Glyph) to symbol or descriptive text."""
+    # Standard PGN NAG definitions (1-139) for LaTeX output
     nag_symbols = {
+        # Move assessments
         1: '!',      # Good move
         2: '?',      # Mistake
         3: '!!',     # Brilliant move
         4: '??',     # Blunder
         5: '!?',     # Interesting move
-        6: '?!',     # Dubious move
-        10: '=',     # Equal position
-        13: '∞',     # Unclear
-        14: '+=',    # Slight advantage for White
-        15: '=+',    # Slight advantage for Black
-        16: '+/−',   # White is better
-        17: '−/+',   # Black is better
-        18: '+−',    # White is winning
-        19: '−+',    # Black is winning
-        22: '⨀',    # Zugzwang
-        36: '→',     # Initiative
-        40: '↑',     # Attack
+        6: '?!',     # Questionable move
+        7: r'\nagforced ', # Only move
+        8: '[singular move]',
+        9: r'\nagworst ', # Worst move
+        
+        # Positional assessments
+        10: '=',     # Drawish
+        11: '[equal chances, quiet]',
+        12: '[equal chances, active]',
+        13: r'\nagunclear ', # Unclear
+        14: r'\nagwbetter ', # Slight advantage White
+        15: r'\nagbbetter ', # Slight advantage Black
+        16: r'\nagwhitebetter ', # Better White
+        17: r'\nagblackbetter ', # Better Black
+        18: r'\nagwwinning ', # Winning White
+        19: r'\nagbwinning ', # Winning Black
+        20: r'+--',  # Crushing White
+        21: r'--+',  # Crushing Black
+        22: r'\nagzugzwang ', # Zugzwang White
+        23: r'\nagzugzwang ', # Zugzwang Black
+        24: '[space advantage White]',
+        25: '[space advantage Black]',
+        26: r'\ensuremath{\circ}',   # Space advantage White
+        27: '[space advantage Black]',
+        28: '[decisive space advantage White]',
+        29: '[decisive space advantage Black]',
+        30: '[development advantage White]',
+        31: '[development advantage Black]',
+        32: r'\nagdevadv ',   # Development advantage White
+        33: r'\nagdevadv ',   # Development advantage Black
+        34: '[decisive development advantage White]',
+        35: '[decisive development advantage Black]',
+        36: r'\naginitiative ', # Initiative White
+        37: r'\naginitiative ', # Initiative Black
+        38: '[lasting initiative White]',
+        39: '[lasting initiative Black]',
+        40: r'\nagattack ',   # Attack White
+        41: r'\nagattack ',   # Attack Black
+        42: '[insufficient compensation White]',
+        43: '[insufficient compensation Black]',
+        44: r'\nagcompensation ', # Compensation White
+        45: '[compensation Black]',
+        46: '[more than adequate compensation White]',
+        47: '[more than adequate compensation Black]',
+        48: '[center control advantage White]',
+        49: '[center control advantage Black]',
+        50: '[moderate center control White]',
+        51: '[moderate center control Black]',
+        52: '[decisive center control White]',
+        53: '[decisive center control Black]',
+        54: '[kingside control White]',
+        55: '[kingside control Black]',
+        56: '[moderate kingside control White]',
+        57: '[moderate kingside control Black]',
+        58: '[decisive kingside control White]',
+        59: '[decisive kingside control Black]',
+        60: '[queenside control White]',
+        61: '[queenside control Black]',
+        62: '[moderate queenside control White]',
+        63: '[moderate queenside control Black]',
+        64: '[decisive queenside control White]',
+        65: '[decisive queenside control Black]',
+        66: '[vulnerable first rank White]',
+        67: '[vulnerable first rank Black]',
+        68: '[well protected first rank White]',
+        69: '[well protected first rank Black]',
+        70: '[poorly protected king White]',
+        71: '[poorly protected king Black]',
+        72: '[well protected king White]',
+        73: '[well protected king Black]',
+        74: '[poorly placed king White]',
+        75: '[poorly placed king Black]',
+        76: '[well placed king White]',
+        77: '[well placed king Black]',
+        78: '[very weak pawn structure White]',
+        79: '[very weak pawn structure Black]',
+        80: '[moderately weak pawn structure White]',
+        81: '[moderately weak pawn structure Black]',
+        82: '[moderately strong pawn structure White]',
+        83: '[moderately strong pawn structure Black]',
+        84: '[very strong pawn structure White]',
+        85: '[very strong pawn structure Black]',
+        86: '[poor knight placement White]',
+        87: '[poor knight placement Black]',
+        88: '[good knight placement White]',
+        89: '[good knight placement Black]',
+        90: '[poor bishop placement White]',
+        91: '[poor bishop placement Black]',
+        92: '[good bishop placement White]',
+        93: '[good bishop placement Black]',
+        94: '[poor rook placement White]',
+        95: '[poor rook placement Black]',
+        96: '[good rook placement White]',
+        97: '[good rook placement Black]',
+        98: '[poor queen placement White]',
+        99: '[poor queen placement Black]',
+        100: '[good queen placement White]',
+        101: '[good queen placement Black]',
+        102: '[poor piece coordination White]',
+        103: '[poor piece coordination Black]',
+        104: '[good piece coordination White]',
+        105: '[good piece coordination Black]',
+        106: '[opening played very poorly White]',
+        107: '[opening played very poorly Black]',
+        108: '[opening played poorly White]',
+        109: '[opening played poorly Black]',
+        110: '[opening played well White]',
+        111: '[opening played well Black]',
+        112: '[opening played very well White]',
+        113: '[opening played very well Black]',
+        114: '[middlegame played very poorly White]',
+        115: '[middlegame played very poorly Black]',
+        116: '[middlegame played poorly White]',
+        117: '[middlegame played poorly Black]',
+        118: '[middlegame played well White]',
+        119: '[middlegame played well Black]',
+        120: '[middlegame played very well White]',
+        121: '[middlegame played very well Black]',
+        122: '[ending played very poorly White]',
+        123: '[ending played very poorly Black]',
+        124: '[ending played poorly White]',
+        125: '[ending played poorly Black]',
+        126: '[ending played well White]',
+        127: '[ending played well Black]',
+        128: '[ending played very well White]',
+        129: '[ending played very well Black]',
+        130: '[slight counterplay White]',
+        131: '[slight counterplay Black]',
+        132: r'\nagcounterplay ', # Counterplay White
+        133: r'\nagcounterplay ', # Counterplay Black
+        134: '[decisive counterplay White]',
+        135: '[decisive counterplay Black]',
+        
+        # Time pressure
+        136: '[time pressure White]',
+        137: '[time pressure Black]',
+        138: r'\nagzeitnot ', # Severe time pressure White
+        139: r'\nagzeitnot ', # Severe time pressure Black
     }
     return nag_symbols.get(nag, '')
 
@@ -130,10 +258,30 @@ def generate_latex_preamble() -> str:
     return r"""\documentclass[11pt]{article}
 \usepackage{xskak}
 \usepackage{chessboard}
+\usepackage{amssymb}
 \usepackage[margin=1in]{geometry}
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage{parskip}
 \usepackage{xcolor}
+
+% Custom commands for NAG symbols to ensure math-safety and compatibility
+\newcommand{\nagforced}{\ensuremath{\square}}
+\newcommand{\nagworst}{\ensuremath{\boxtimes}}
+\newcommand{\nagunclear}{\ensuremath{\infty}}
+\newcommand{\nagwbetter}{\ensuremath{\pm}}
+\newcommand{\nagbbetter}{\ensuremath{\mp}}
+\newcommand{\nagwhitebetter}{\ensuremath{\pm}}
+\newcommand{\nagblackbetter}{\ensuremath{\mp}}
+\newcommand{\nagwwinning}{\ensuremath{+-}}
+\newcommand{\nagbwinning}{\ensuremath{-+}}
+\newcommand{\nagzugzwang}{\ensuremath{\odot}}
+\newcommand{\nagdevadv}{\ensuremath{\circlearrowright}}
+\newcommand{\naginitiative}{\ensuremath{\uparrow}}
+\newcommand{\nagattack}{\ensuremath{\rightarrow}}
+\newcommand{\nagcompensation}{\ensuremath{\overline{\infty}}}
+\newcommand{\nagcounterplay}{\ensuremath{\leftrightarrow}}
+\newcommand{\nagzeitnot}{\ensuremath{\oplus}}
 
 % Custom chess board styling
 \setchessboard{
