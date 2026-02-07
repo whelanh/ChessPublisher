@@ -233,6 +233,9 @@ def process_node(
     """
     Process a game node recursively, handling moves, comments, and variations.
     
+    CRITICAL: The board parameter is MUTABLE and will be modified during processing.
+    This is intentional for the mainline but variations must use copies.
+    
     Returns:
         Tuple of (latex_content, updated_move_count, diagram_positions)
     """
@@ -249,36 +252,36 @@ def process_node(
         starting_comment = child.starting_comment.strip() if child.starting_comment else ""
         comment = child.comment.strip() if child.comment else ""
         
-        # Check both starting_comment and comment for diagram annotation
+        # Check for diagram annotation
         show_diagram = has_diagram_annotation(starting_comment) or has_diagram_annotation(comment)
-        
         if has_diagram_annotation(starting_comment):
             starting_comment = strip_diagram_annotation(starting_comment)
         if has_diagram_annotation(comment):
             comment = strip_diagram_annotation(comment)
         
-        # Format the move
+        # Add starting comment if present
+        if starting_comment:
+            formatted_comment = format_evaluation(starting_comment)
+            latex += f"\\gamecomment{{{escape_latex(formatted_comment)}}} "
+        
         if is_mainline:
-            # Mainline move
+            # Format the move
             san = board.san(move)
+            san = escape_latex(san)  # Escape special characters like # for checkmate
             if board.turn == chess.WHITE:
-                latex += f"\\textbf{{{move_count}. {san}}}"
+                latex += f"{move_count}. {san}"
             else:
-                # For black moves at start of line or after diagram/comment, add move number
-                if not latex.strip() or latex.rstrip().endswith('}'):
-                    latex += f"\\textbf{{{move_count}... {san}}}"
-                else:
-                    latex += f" \\textbf{{{san}}}"
+                latex += f"{san}"
             
-            # Add NAGs (annotation symbols)
+            # Add NAGs (annotation symbols like !, ?, !!, etc.)
             for nag in child.nags:
                 symbol = nag_to_symbol(nag)
                 if symbol:
-                    latex += f"\\textbf{{{symbol}}}"
+                    latex += symbol
             
-            # Add diagram if requested (after showing the move)
+            # Show diagram if requested
             if show_diagram:
-                # Store position for diagram
+                # Save current board state
                 board.push(move)
                 fen = board.fen()
                 board.pop()
@@ -300,27 +303,33 @@ def process_node(
             # Make the move on the board
             board.push(move)
             
-            # Update move count
+            # Update move count AFTER making the move
             if board.turn == chess.WHITE:
                 move_count += 1
             
-            # Process child variations (sidelines) - these are alternatives at this point
+            # Process variations at the PARENT level (alternatives to the move we just made)
+            # node.variations contains: [child (mainline), alt1, alt2, ...]
+            # So node.variations[1:] are the alternatives to the move we just made
             if len(node.variations) > 1:
                 for alt_idx, alt_child in enumerate(node.variations[1:], 1):
-                    # This is a variation/sideline
+                    # Create a fresh board copy and go back to BEFORE the mainline move
                     var_board = board.copy()
-                    var_board.pop()  # Go back to position before mainline move
+                    var_board.pop()  # Remove the mainline move we just made
+                    
+                    # Calculate move count for the position before the mainline move
+                    var_move_count = move_count - (1 if board.turn == chess.WHITE else 0)
                     
                     var_latex, var_diagrams = process_variation(
-                        alt_child, var_board, 
-                        move_count - (1 if board.turn == chess.WHITE else 0),
+                        alt_child, 
+                        var_board,  # At position before mainline move
+                        var_move_count,
                         depth + 1
                     )
                     latex += f"\\sideline{{{var_latex.strip()}}}"
                     diagram_positions.extend(var_diagrams)
                     latex += " "
             
-            # Continue with mainline
+            # Continue with mainline (board is already updated)
             child_latex, move_count, diagram_positions = process_node(
                 child, board, move_count, depth, diagram_positions
             )
@@ -339,7 +348,11 @@ def process_variation(
 ) -> Tuple[str, List[Tuple[str, str]]]:
     """
     Process a variation (sideline) and return its LaTeX representation.
-    Follows the mainline of the variation and handles nested sub-variations.
+    
+    CRITICAL FIX: This function receives a COPY of the board and will modify it.
+    Each recursive call must get its own fresh copy.
+    
+    The board parameter should be positioned at the point where the variation begins.
     """
     diagram_positions = []
     latex = ""
@@ -347,7 +360,7 @@ def process_variation(
     current_node = node
     first_move = True
     
-    while current_node.move is not None:
+    while current_node is not None and current_node.move is not None:
         move = current_node.move
         comment = current_node.comment.strip() if current_node.comment else ""
         starting_comment = current_node.starting_comment.strip() if current_node.starting_comment else ""
@@ -361,6 +374,7 @@ def process_variation(
         
         # Format the move
         san = board.san(move)
+        san = escape_latex(san)  # Escape special characters like # for checkmate
         if board.turn == chess.WHITE:
             latex += f"{move_count}. {san}"
         else:
@@ -385,29 +399,38 @@ def process_variation(
         
         latex += " "
         
-        # Make the move
+        # Make the move on THIS board (it's our own copy, so this is safe)
         board.push(move)
+        
+        # Update move count AFTER making the move
         if board.turn == chess.WHITE:
             move_count += 1
         
-        # Check for nested variations (alternatives at this position)
-        if len(current_node.variations) > 1:
-            for alt_child in current_node.variations[1:]:
-                # Nested sideline
-                subvar_board = board.copy()
-                subvar_board.pop()  # Go back to position before the move
-                subvar_latex, subvar_diagrams = process_variation(
-                    alt_child, subvar_board,
-                    move_count - (1 if board.turn == chess.WHITE else 0),
-                    depth + 1
-                )
-                latex += f"\\sideline{{{subvar_latex.strip()}}} "
-                diagram_positions.extend(subvar_diagrams)
-        
-        # Move to next node in the variation (mainline of this variation)
+        # Move to next node in this variation's mainline
         if current_node.variations:
+            # BEFORE moving to the next node, check if there are alternatives
+            # current_node.variations[0] is the mainline (next move we'll process)
+            # current_node.variations[1:] are alternatives to that next move
+            if len(current_node.variations) > 1:
+                for alt_child in current_node.variations[1:]:
+                    # The board is currently at the RIGHT position for these alternatives
+                    # They are alternatives to the next move, starting from current position
+                    subvar_board = board.copy()
+                    
+                    # Recursively process with a fresh board copy
+                    subvar_latex, subvar_diagrams = process_variation(
+                        alt_child,
+                        subvar_board,  # Fresh copy at current position
+                        move_count,
+                        depth + 1
+                    )
+                    latex += f"\\sideline{{{subvar_latex.strip()}}} "
+                    diagram_positions.extend(subvar_diagrams)
+            
+            # Now move to the next node in the mainline
             current_node = current_node.variation(0)
         else:
+            # No more moves in this variation
             break
     
     return latex, diagram_positions
